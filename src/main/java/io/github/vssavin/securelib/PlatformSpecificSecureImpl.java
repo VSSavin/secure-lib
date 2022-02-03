@@ -23,12 +23,12 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
 
     @Override
     public String decrypt(String encoded) {
-        return encode(encoded);
+        return decode(encoded);
     }
 
     @Override
     public String encrypt(String message) {
-        return decode(message);
+        return encode(message);
     }
 
     @Override
@@ -55,6 +55,14 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
     private static void setKey(String myKey) {
         MessageDigest sha;
         try {
+            if (myKey.length() < 16) {
+                StringBuilder builder = new StringBuilder(myKey);
+                while (builder.length() < 16) {
+                    builder.append("0");
+                }
+                myKey = builder.toString();
+            }
+
             byte[] key = myKey.getBytes(StandardCharsets.UTF_8);
             sha = MessageDigest.getInstance("SHA-1");
             key = sha.digest(key);
