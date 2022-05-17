@@ -52,6 +52,10 @@ encodeRSA = function(value) {
     return encrypted;
 };
 
+encodeNOSECURE = function(value) {
+    return value;
+}
+
 stringToInt32Array = function(str) {
     var arr = [];
 

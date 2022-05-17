@@ -6,6 +6,7 @@ package io.github.vssavin.securelib;
 public interface Secure {
 
     enum SecureAlgorithm {
+        NOSECURE,
         AES,
         RSA
     }
