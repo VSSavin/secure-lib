@@ -12,16 +12,13 @@ import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class RSASecure implements Secure {
     private static final Logger LOG = LoggerFactory.getLogger(RSASecure.class);
-    private static final int EXPIRATION_KEY_SECONDS = 60;
+    private static int EXPIRATION_KEY_SECONDS = 60;
     private static final Map<String, SecureParams> cache = new ConcurrentHashMap<>();
     private static KeyPairGenerator keyPairGenerator = null;
     private static Cipher rsaCipher = null;
@@ -38,6 +35,10 @@ public class RSASecure implements Secure {
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             LOG.error("Key pair generator initialize error: ", e);
         }
+    }
+
+    public static void setExpirationKeySeconds(int expirationKeySeconds) {
+        EXPIRATION_KEY_SECONDS = expirationKeySeconds;
     }
 
     @Override
@@ -66,17 +67,23 @@ public class RSASecure implements Secure {
 
     @Override
     public String decrypt(String encoded, String publicKey) {
-        String decrypted = "";
+        String decrypted;
         try {
             String privateKeyString = getPrivateKeyByPublicKey(publicKey);
             byte[] privateKeyBytes = Base64.getDecoder().decode(privateKeyString.getBytes());
             EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
             PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
             rsaCipher.init(Cipher.DECRYPT_MODE, privateKey);
-            decrypted = new String(rsaCipher.doFinal(Base64.getDecoder().decode(encoded.getBytes())));
+            byte[] base64 = Base64.getDecoder().decode(encoded.getBytes());
+            byte[] decryptedBytes = rsaCipher.doFinal(base64);
+            Arrays.fill(base64, (byte)0);
+            decrypted = new String(decryptedBytes);
+            Arrays.fill(decryptedBytes, (byte)0);
         } catch (InvalidKeySpecException | InvalidKeyException |
                 BadPaddingException | IllegalBlockSizeException e) {
-            LOG.error("Decrypting error: ", e);
+            String errorMessage = "Decryption error!";
+            LOG.error(errorMessage, e);
+            throw new EncryptionException(errorMessage, e);
         }
 
         return decrypted;
@@ -87,15 +94,22 @@ public class RSASecure implements Secure {
         publicKeyString = normalizeKey(publicKeyString);
 
         Cipher encryptCipher;
-        String encrypted = "";
+        String encrypted;
         try {
             encryptCipher = Cipher.getInstance("RSA");
             EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyString.getBytes()));
             PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
             encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
-            encrypted = new String(Base64.getEncoder().encode(encryptCipher.doFinal(message.getBytes())));
+            byte[] encryptedBytes = encryptCipher.doFinal(message.getBytes());
+            byte[] base64 = Base64.getEncoder().encode(encryptedBytes);
+            Arrays.fill(encryptedBytes, (byte) 0);
+            encrypted = new String(base64);
+            Arrays.fill(base64, (byte) 0);
+
         } catch (Exception e) {
-            LOG.error("Encrypting error: ", e);
+            String errorMessage = "Encryption error!";
+            LOG.error(errorMessage, e);
+            throw new EncryptionException(errorMessage, e);
         }
 
         return encrypted;
@@ -129,17 +143,17 @@ public class RSASecure implements Secure {
         return filtered.size() > 0 ? filtered.get(0).getPrivateKey() : "";
     }
 
-    private class SecureParams {
-        private String address;
-        private String publicKey;
-        private String privateKey;
-        private Date expiration;
+    private static class SecureParams {
+        private final String address;
+        private final String publicKey;
+        private final String privateKey;
+        private final Date expiration;
 
         SecureParams(String address, String publicKey, String privateKey) {
             this.address = address;
             this.publicKey = publicKey;
             this.privateKey = privateKey;
-            this.expiration = new Date(System.currentTimeMillis() + EXPIRATION_KEY_SECONDS * 1000);
+            this.expiration = new Date(System.currentTimeMillis() + EXPIRATION_KEY_SECONDS * 1000L);
         }
 
         boolean isExpired() {

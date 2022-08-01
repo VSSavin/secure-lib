@@ -63,7 +63,12 @@ public class AESSecure implements Secure {
                 }
 
                 if (result != null) {
-                    decrypted = result.toString().replaceAll("\0", "");
+                    String decryptedResult = result.toString();
+                    decrypted = decryptedResult.replaceAll("\0", "");
+                    //using '!=' instead of equals because String.replaceAll can return the same object...
+                    if (decryptedResult != decrypted) {
+                        Utils.clearString(decryptedResult);
+                    }
                 }
             }
 
@@ -77,7 +82,7 @@ public class AESSecure implements Secure {
 
     @Override
     public String encrypt(String message, String key) {
-        String decrypted = "";
+        String encrypted = "";
 
         try {
             if (message != null && key != null) {
@@ -90,16 +95,20 @@ public class AESSecure implements Secure {
                 }
 
                 if (result != null) {
-                    decrypted = result.toString().replaceAll("\0", "");
+                    String encryptedResult = result.toString();
+                    encrypted = encryptedResult.replaceAll("\0", "");
+                    //using '!=' instead of equals because String.replaceAll can return the same object...
+                    if (encryptedResult != encrypted) {
+                        Utils.clearString(encryptedResult);
+                    }
                 }
             }
-
 
         } catch (ScriptException | NoSuchMethodException e) {
             LOG.error("JS processing error: ", e);
         }
 
-        return decrypted;
+        return encrypted;
     }
 
     @Override
@@ -148,15 +157,15 @@ public class AESSecure implements Secure {
                 "}", key);
     }
 
-    private class SecureParams {
-        private String address;
-        private String secureKey;
-        private Date expiration;
+    private static class SecureParams {
+        private final String address;
+        private final String secureKey;
+        private final Date expiration;
 
         SecureParams(String address, String secureKey) {
             this.address = address;
             this.secureKey = secureKey;
-            this.expiration = new Date(System.currentTimeMillis() + EXPIRATION_KEY_SECONDS * 1000);
+            this.expiration = new Date(System.currentTimeMillis() + EXPIRATION_KEY_SECONDS * 1000L);
         }
 
         boolean isExpired() {

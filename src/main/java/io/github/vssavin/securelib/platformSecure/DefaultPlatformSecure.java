@@ -8,8 +8,9 @@ import java.util.*;
 
 class DefaultPlatformSecure implements PlatformSecure {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultPlatformSecure.class);
+    private static final boolean debug = LOG.isDebugEnabled();
 
-    private static List<String> IGNORED_INTERFACES = new ArrayList<>();
+    private static final List<String> IGNORED_INTERFACES = new ArrayList<>();
 
     static {
         try {
@@ -22,8 +23,10 @@ class DefaultPlatformSecure implements PlatformSecure {
                 }
             }
 
-        } catch (MissingResourceException ignored) {
-            //ignore
+        } catch (MissingResourceException e) {
+            if (debug) {
+                LOG.debug("Missing ignoredInterfaces resource!");
+            }
         }
     }
 
@@ -73,6 +76,7 @@ class DefaultPlatformSecure implements PlatformSecure {
         for(String ignoredInterface : IGNORED_INTERFACES) {
             if (name.contains(ignoredInterface)) {
                 ignored = true;
+                break;
             }
         }
 
