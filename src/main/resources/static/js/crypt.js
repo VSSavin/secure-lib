@@ -91,14 +91,3 @@ Int32ArrayToString = function(wordArray) {
 
     return binary;
 }
-
-getKey = function() {
-    return httpGet('/secure/key');
-};
-
-httpGet = function(getUrl) {
-    var xmlHttp = new XMLHttpRequest();
-    xmlHttp.open("GET", getUrl, false);
-    xmlHttp.send(null);
-    return xmlHttp.responseText;
-}

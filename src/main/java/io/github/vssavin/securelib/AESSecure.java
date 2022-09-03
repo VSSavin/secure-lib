@@ -152,7 +152,7 @@ public class AESSecure implements Secure {
     }
 
     private String getScriptForKey(String key) {
-        return String.format("httpGet = function(strUrl) {" +
+        return String.format("getKey = function() {" +
                 "   return \"%s\"" +
                 "}", key);
     }

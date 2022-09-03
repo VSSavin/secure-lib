@@ -6,7 +6,7 @@
 
     <groupId>io.github.vssavin</groupId>
     <artifactId>secure-lib</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <properties>
         <git.repository.mvn.branch>mvn-repo</git.repository.mvn.branch>
