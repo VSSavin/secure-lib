@@ -39,7 +39,7 @@ public class AESSecure implements Secure {
         SecureParams secureParams = cache.get(id);
         String uuid;
         if (secureParams == null || secureParams.isExpired()) {
-            uuid = UUID.randomUUID().toString().replaceAll("-", "");
+            uuid = UUID.randomUUID().toString().replace("-", "");
             secureParams = new SecureParams(id, uuid);
             cache.put(id, secureParams);
         } else {
@@ -64,14 +64,12 @@ public class AESSecure implements Secure {
 
                 if (result != null) {
                     String decryptedResult = result.toString();
-                    decrypted = decryptedResult.replaceAll("\0", "");
-                    //using '!=' instead of equals because String.replaceAll can return the same object...
-                    if (decryptedResult != decrypted) {
+                    decrypted = decryptedResult.replace("\0", "");
+                    if (!Objects.equals(decryptedResult, decrypted)) {
                         Utils.clearString(decryptedResult);
                     }
                 }
             }
-
 
         } catch (ScriptException | NoSuchMethodException e) {
             LOG.error("JS processing error: ", e);
@@ -96,9 +94,8 @@ public class AESSecure implements Secure {
 
                 if (result != null) {
                     String encryptedResult = result.toString();
-                    encrypted = encryptedResult.replaceAll("\0", "");
-                    //using '!=' instead of equals because String.replaceAll can return the same object...
-                    if (encryptedResult != encrypted) {
+                    encrypted = encryptedResult.replace("\0", "");
+                    if (!Objects.equals(encryptedResult, encrypted)) {
                         Utils.clearString(encryptedResult);
                     }
                 }
