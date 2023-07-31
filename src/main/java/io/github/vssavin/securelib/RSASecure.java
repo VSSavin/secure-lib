@@ -18,27 +18,48 @@ import java.util.stream.Collectors;
 
 public class RSASecure implements Secure {
     private static final Logger LOG = LoggerFactory.getLogger(RSASecure.class);
-    private static int EXPIRATION_KEY_SECONDS = 60;
+    private static int expirationKeySeconds = 60;
     private static final Map<String, SecureParams> cache = new ConcurrentHashMap<>();
-    private static KeyPairGenerator keyPairGenerator = null;
-    private static Cipher rsaCipher = null;
-    private static KeyFactory keyFactory = null;
+    private final KeyPairGenerator keyPairGenerator;
+    private final Cipher rsaCipher;
+    private final KeyFactory keyFactory;
     private final String ENCRYPT_METHOD_NAME_FOR_VIEW = Secure.getEncryptionMethodName(SecureAlgorithm.RSA);
 
     static {
         java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+    }
+
+    public RSASecure() {
+        KeyFactory keyFactory1;
+        Cipher rsaCipher1;
+        KeyPairGenerator keyPairGenerator1;
+        try {
+            keyPairGenerator1 = KeyPairGenerator.getInstance("RSA");
+        } catch (NoSuchAlgorithmException e) {
+            keyPairGenerator1 = null;
+        }
+
+        keyPairGenerator = keyPairGenerator1;
+        try {
+            rsaCipher1 = Cipher.getInstance("RSA/ECB/OAEPWITHSHA-256ANDMGF1PADDING");
+
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            rsaCipher1 = null;
+        }
+
+        rsaCipher = rsaCipher1;
 
         try {
-            keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-            rsaCipher = Cipher.getInstance("RSA");
-            keyFactory = KeyFactory.getInstance("RSA");
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            LOG.error("Key pair generator initialize error: ", e);
+            keyFactory1 = KeyFactory.getInstance("RSA");
+        } catch (NoSuchAlgorithmException e) {
+            keyFactory1 = null;
         }
+
+        keyFactory = keyFactory1;
     }
 
     public static void setExpirationKeySeconds(int expirationKeySeconds) {
-        EXPIRATION_KEY_SECONDS = expirationKeySeconds;
+        RSASecure.expirationKeySeconds = expirationKeySeconds;
     }
 
     @Override
@@ -73,9 +94,16 @@ public class RSASecure implements Secure {
             byte[] privateKeyBytes = Base64.getDecoder().decode(privateKeyString.getBytes());
             EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
             PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
-            rsaCipher.init(Cipher.DECRYPT_MODE, privateKey);
+            synchronized (rsaCipher) {
+                rsaCipher.init(Cipher.DECRYPT_MODE, privateKey);
+            }
+
             byte[] base64 = Base64.getDecoder().decode(encoded.getBytes());
-            byte[] decryptedBytes = rsaCipher.doFinal(base64);
+            byte[] decryptedBytes;
+            synchronized (rsaCipher) {
+                decryptedBytes = rsaCipher.doFinal(base64);
+            }
+
             Arrays.fill(base64, (byte)0);
             decrypted = new String(decryptedBytes);
             Arrays.fill(decryptedBytes, (byte)0);
@@ -91,12 +119,13 @@ public class RSASecure implements Secure {
 
     @Override
     public String encrypt(String message, String publicKeyString) {
+        if (publicKeyString == null) return message;
         publicKeyString = normalizeKey(publicKeyString);
 
         Cipher encryptCipher;
         String encrypted;
         try {
-            encryptCipher = Cipher.getInstance("RSA");
+            encryptCipher = Cipher.getInstance("RSA/ECB/OAEPWITHSHA-256ANDMGF1PADDING");
             EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyString.getBytes()));
             PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
             encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
@@ -140,7 +169,7 @@ public class RSASecure implements Secure {
     private String getPrivateKeyByPublicKey(String pulbicKey) {
         List<SecureParams> filtered = cache.values().stream()
                 .filter(secureParams -> secureParams.getPublicKey().equals(pulbicKey)).collect(Collectors.toList());
-        return filtered.size() > 0 ? filtered.get(0).getPrivateKey() : "";
+        return !filtered.isEmpty() ? filtered.get(0).getPrivateKey() : "";
     }
 
     private static class SecureParams {
@@ -153,7 +182,7 @@ public class RSASecure implements Secure {
             this.address = address;
             this.publicKey = publicKey;
             this.privateKey = privateKey;
-            this.expiration = new Date(System.currentTimeMillis() + EXPIRATION_KEY_SECONDS * 1000L);
+            this.expiration = new Date(System.currentTimeMillis() + expirationKeySeconds * 1000L);
         }
 
         boolean isExpired() {
