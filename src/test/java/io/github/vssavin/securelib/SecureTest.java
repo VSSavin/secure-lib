@@ -26,55 +26,6 @@ public class SecureTest {
 
     }
 
-    private void secureConcurrentTest(Secure secure) throws ExecutionException, InterruptedException {
-        String key = secure.getSecureKey(secure.toString());
-        final int threadsCount = 10;
-
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
-        Map<String, String> encryptedMap = new ConcurrentHashMap<>();
-        List<String> messages = new CopyOnWriteArrayList<>();
-
-        CountDownLatch latch = new CountDownLatch(1);
-
-        for(int i = 0; i < threadsCount; i++) {
-            futures.add(CompletableFuture.runAsync(() -> {
-                try {
-                    latch.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                String message = randomString();
-                String encrypted = secure.encrypt(message, key);
-                encryptedMap.put(message, encrypted);
-                messages.add(message);
-            }));
-        }
-
-        CompletableFuture<?>[] futuresArray = futures.toArray(new CompletableFuture[0]);
-        latch.countDown();
-        CompletableFuture.allOf(futuresArray).get();
-
-        futures.clear();
-        CountDownLatch latch2 = new CountDownLatch(1);
-        for (int i = 0; i < threadsCount; i++) {
-            String message = messages.get(i);
-            futures.add(CompletableFuture.runAsync(() -> {
-                try {
-                    latch2.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                secure.decrypt(encryptedMap.get(message), key);
-            }));
-        }
-
-        futuresArray = futures.toArray(new CompletableFuture[0]);
-
-        latch2.countDown();
-
-        CompletableFuture.allOf(futuresArray).get();
-    }
-
     @Test
     public void AESSecureConcurrentTest() {
         Secure aesSecure = new AESSecure();
@@ -127,6 +78,55 @@ public class SecureTest {
         String decrypted = rsaSecure.decrypt(encrypted, rsaKey);
 
         Assert.assertEquals(testMessage, decrypted);
+    }
+
+    private void secureConcurrentTest(Secure secure) throws ExecutionException, InterruptedException {
+        String key = secure.getSecureKey(secure.toString());
+        final int threadsCount = 10;
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        Map<String, String> encryptedMap = new ConcurrentHashMap<>();
+        List<String> messages = new CopyOnWriteArrayList<>();
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        for(int i = 0; i < threadsCount; i++) {
+            futures.add(CompletableFuture.runAsync(() -> {
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                String message = randomString();
+                String encrypted = secure.encrypt(message, key);
+                encryptedMap.put(message, encrypted);
+                messages.add(message);
+            }));
+        }
+
+        CompletableFuture<?>[] futuresArray = futures.toArray(new CompletableFuture[0]);
+        latch.countDown();
+        CompletableFuture.allOf(futuresArray).get();
+
+        futures.clear();
+        CountDownLatch latch2 = new CountDownLatch(1);
+        for (int i = 0; i < threadsCount; i++) {
+            String message = messages.get(i);
+            futures.add(CompletableFuture.runAsync(() -> {
+                try {
+                    latch2.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                secure.decrypt(encryptedMap.get(message), key);
+            }));
+        }
+
+        futuresArray = futures.toArray(new CompletableFuture[0]);
+
+        latch2.countDown();
+
+        CompletableFuture.allOf(futuresArray).get();
     }
 
     private String randomString() {
