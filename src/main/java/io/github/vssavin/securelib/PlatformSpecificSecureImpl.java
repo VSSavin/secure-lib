@@ -15,9 +15,11 @@ import java.util.Base64;
 
 public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
     private static final Logger LOG = LoggerFactory.getLogger(PlatformSpecificSecureImpl.class);
-    private static SecretKeySpec secretKey;
+    private SecretKeySpec secretKey;
 
-    static {
+    private static final String ENCRYPTION_ALGORITHM = "AES/ECB/PKCS5Padding";
+
+    public PlatformSpecificSecureImpl() {
         prepare();
     }
 
@@ -41,7 +43,7 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
         return encode(message, key);
     }
 
-    private static void prepare() {
+    private void prepare() {
         PlatformSecure platformSecure = PlatformSecureFactory.getPlatformSecurity();
         String key = platformSecure.getSecureKey();
         if (key.isEmpty()) {
@@ -52,8 +54,8 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
             setKey(key);
         }
     }
-    private static void setKey(String myKey) {
-        MessageDigest sha;
+
+    private void setKey(String myKey) {
         try {
             if (myKey.length() < 16) {
                 StringBuilder builder = new StringBuilder(myKey);
@@ -64,8 +66,11 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
             }
 
             byte[] key = myKey.getBytes(StandardCharsets.UTF_8);
-            sha = MessageDigest.getInstance("SHA-1");
-            key = sha.digest(key);
+            MessageDigest sha = MessageDigest.getInstance("SHA-1");
+            synchronized (sha) {
+                key = sha.digest(key);
+            }
+
             key = Arrays.copyOf(key, 16);
             secretKey = new SecretKeySpec(key, "AES");
         }
@@ -78,9 +83,11 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
     private String encode(String strToEncrypt) {
         String result = "";
         try {
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-            result = Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes(StandardCharsets.UTF_8)));
+            Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
+            synchronized (cipher) {
+                cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+                result = Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes(StandardCharsets.UTF_8)));
+            }
         }
         catch (Exception ex) {
             LOG.error("Encrypt error: ", ex);
@@ -91,9 +98,11 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
     private String decode(String strToDecrypt) {
         String result = "";
         try {
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, secretKey);
-            result = new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
+            Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
+            synchronized (cipher) {
+                cipher.init(Cipher.DECRYPT_MODE, secretKey);
+                result = new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
+            }
         }
         catch (Exception e) {
             LOG.error("Decrypt error: ", e);
@@ -105,9 +114,11 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
         String result = "";
         try {
             setKey(key);
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-            result = Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes(StandardCharsets.UTF_8)));
+            Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
+            synchronized (cipher) {
+                cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+                result = Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes(StandardCharsets.UTF_8)));
+            }
         }
         catch (Exception ex) {
             LOG.error("Encrypt error: ", ex);
@@ -119,9 +130,11 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
         String result = "";
         try {
             setKey(key);
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, secretKey);
-            result = new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
+            Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
+            synchronized (cipher) {
+                cipher.init(Cipher.DECRYPT_MODE, secretKey);
+                result = new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
+            }
         }
         catch (Exception e) {
             LOG.error("Decrypt error: ", e);

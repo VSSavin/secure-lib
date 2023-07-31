@@ -4,11 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.*;
 
 class DefaultPlatformSecure implements PlatformSecure {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultPlatformSecure.class);
-    private static final boolean debug = LOG.isDebugEnabled();
+    private static final boolean DEBUG_ENABLED = LOG.isDebugEnabled();
 
     private static final List<String> IGNORED_INTERFACES = new ArrayList<>();
 
@@ -24,7 +25,7 @@ class DefaultPlatformSecure implements PlatformSecure {
             }
 
         } catch (MissingResourceException e) {
-            if (debug) {
+            if (DEBUG_ENABLED) {
                 LOG.debug("Missing ignoredInterfaces resource!");
             }
         }
@@ -34,31 +35,13 @@ class DefaultPlatformSecure implements PlatformSecure {
     public String getSecureKey() {
         String key = "";
         try {
-            Enumeration<NetworkInterface> net = NetworkInterface.getNetworkInterfaces();
-            Set<String> ids = new TreeSet<>();
-
-            while(net.hasMoreElements()) {
-                NetworkInterface element = net.nextElement();
-
-                if (!isIgnoredInterface(element.getName())) {
-                    byte[] mac = element.getHardwareAddress();
-                    StringBuilder sb = new StringBuilder();
-                    if (mac != null) {
-                        for (int i = 0; i < mac.length; i++) {
-                            sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
-                        }
-                    }
-                    String macAddress = sb.toString();
-                    if (!macAddress.isEmpty())  ids.add(sb.toString());
-                }
-            }
-
-            if (ids.size() > 0) {
+            Set<String> ids = getNetworkIds();
+            if (!ids.isEmpty()) {
                 StringBuilder all = new StringBuilder();
                 for (String str: ids) {
                     all.append(str);
                 }
-                key = all.toString().replaceAll("\u0000", "");
+                key = all.toString().replace("\u0000", "");
             }
             else {
                 key = "01234567890";
@@ -69,6 +52,32 @@ class DefaultPlatformSecure implements PlatformSecure {
         }
 
         return key;
+    }
+
+    private Set<String> getNetworkIds() throws SocketException {
+        Enumeration<NetworkInterface> net = NetworkInterface.getNetworkInterfaces();
+        Set<String> ids = new TreeSet<>();
+
+        while(net.hasMoreElements()) {
+            NetworkInterface element = net.nextElement();
+            if (!isIgnoredInterface(element.getName())) {
+                String macAddress = getMacAddress(element);
+                if (!macAddress.isEmpty())  ids.add(macAddress);
+            }
+        }
+
+        return ids;
+    }
+
+    private String getMacAddress(NetworkInterface networkInterface) throws SocketException {
+        byte[] mac = networkInterface.getHardwareAddress();
+        StringBuilder sb = new StringBuilder();
+        if (mac != null) {
+            for (int i = 0; i < mac.length; i++) {
+                sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+            }
+        }
+        return sb.toString();
     }
 
     private boolean isIgnoredInterface(String name) {
