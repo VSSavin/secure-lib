@@ -12,9 +12,13 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-public class PlatformSecureFactory {
+public final class PlatformSecureFactory {
     private static final Logger LOG = LoggerFactory.getLogger(PlatformSecureFactory.class);
     private static final String WINDOWS_DRIVE_LETTER = "C";
+
+    private PlatformSecureFactory() {
+
+    }
 
     public static PlatformSecure getPlatformSecurity() {
         PlatformSecure platformSecurity;
@@ -32,10 +36,8 @@ public class PlatformSecureFactory {
             }
         }
 
-        if (!(platformSecurity instanceof DefaultPlatformSecure)) {
-            if (platformSecurity.getSecureKey().isEmpty()) {
-                platformSecurity = new DefaultPlatformSecure();
-            }
+        if (!(platformSecurity instanceof DefaultPlatformSecure) && platformSecurity.getSecureKey().isEmpty()) {
+            platformSecurity = new DefaultPlatformSecure();
         }
 
         return platformSecurity;
@@ -43,15 +45,15 @@ public class PlatformSecureFactory {
 
     private static PlatformSecure getPlatformSecurity(String name) {
         try {
-            List<Class> classes = getClasses();
-            for (Class clazz : classes) {
+            List<Class<?>> classes = getClasses();
+            for (Class<?> clazz : classes) {
                 if (clazz.getSimpleName().toLowerCase().contains(name)) {
                     try {
-                        Constructor constructor = clazz.getDeclaredConstructor();
+                        Constructor<?> constructor = clazz.getDeclaredConstructor();
                         return (PlatformSecure) constructor.newInstance();
                     } catch (NoSuchMethodException | IllegalAccessException |
                             InstantiationException | InvocationTargetException e) {
-                        LOG.error(String.format("Creating new instance of class %s error!", clazz.getSimpleName()), e);
+                        LOG.error("Creating new instance of class {} error!", clazz.getSimpleName(), e);
                     }
                 }
             }
@@ -62,7 +64,7 @@ public class PlatformSecureFactory {
         return new DefaultPlatformSecure();
     }
 
-    private static List<Class> getClasses()
+    private static List<Class<?>> getClasses()
             throws ClassNotFoundException, IOException {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         assert classLoader != null;
@@ -74,15 +76,15 @@ public class PlatformSecureFactory {
             URL resource = resources.nextElement();
             dirs.add(new File(resource.getFile()));
         }
-        ArrayList<Class> classes = new ArrayList<>();
+        ArrayList<Class<?>> classes = new ArrayList<>();
         for (File directory : dirs) {
             classes.addAll(findClasses(directory, packageName));
         }
         return classes;
     }
 
-    private static List<Class> findClasses(File directory, String packageName) throws ClassNotFoundException {
-        List<Class> classes = new ArrayList<>();
+    private static List<Class<?>> findClasses(File directory, String packageName) throws ClassNotFoundException {
+        List<Class<?>> classes = new ArrayList<>();
         if (!directory.exists()) {
             return classes;
         }

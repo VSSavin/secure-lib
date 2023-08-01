@@ -6,7 +6,7 @@
 
     <groupId>io.github.vssavin</groupId>
     <artifactId>secure-lib</artifactId>
-    <version>1.0.3</version>
+    <version>1.1</version>
 
     <properties>
         <git.repository.mvn.branch>mvn-repo</git.repository.mvn.branch>
@@ -66,6 +66,24 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <configLocation>src/main/resources/checkstyle_base.xml</configLocation>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
