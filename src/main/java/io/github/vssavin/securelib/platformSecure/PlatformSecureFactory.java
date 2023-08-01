@@ -25,12 +25,11 @@ public class PlatformSecureFactory {
             String systemName = System.getProperty("os.name").toLowerCase();
             if (systemName.contains("lin")) {
                 platformSecurity = new LinuxPlatformSecure();
-            }
-            else if (systemName.contains("win")) {
+            } else if (systemName.contains("win")) {
                 platformSecurity = new WindowsPlatformSecure(WINDOWS_DRIVE_LETTER);
+            } else {
+                platformSecurity = new DefaultPlatformSecure();
             }
-
-            else platformSecurity = new DefaultPlatformSecure();
         }
 
         if (!(platformSecurity instanceof DefaultPlatformSecure)) {
@@ -45,7 +44,7 @@ public class PlatformSecureFactory {
     private static PlatformSecure getPlatformSecurity(String name) {
         try {
             List<Class> classes = getClasses();
-            for(Class clazz : classes) {
+            for (Class clazz : classes) {
                 if (clazz.getSimpleName().toLowerCase().contains(name)) {
                     try {
                         Constructor constructor = clazz.getDeclaredConstructor();

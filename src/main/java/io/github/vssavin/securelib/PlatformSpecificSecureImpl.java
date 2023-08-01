@@ -73,9 +73,7 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
 
             key = Arrays.copyOf(key, 16);
             secretKey = new SecretKeySpec(key, "AES");
-        }
-
-        catch (Exception ex) {
+        } catch (Exception ex) {
             LOG.error("SetKey error: ", ex);
         }
     }
@@ -88,8 +86,7 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
                 cipher.init(Cipher.ENCRYPT_MODE, secretKey);
                 result = Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes(StandardCharsets.UTF_8)));
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             LOG.error("Encrypt error: ", ex);
         }
         return result;
@@ -103,8 +100,7 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
                 cipher.init(Cipher.DECRYPT_MODE, secretKey);
                 result = new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Decrypt error: ", e);
         }
         return result;
@@ -119,8 +115,7 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
                 cipher.init(Cipher.ENCRYPT_MODE, secretKey);
                 result = Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes(StandardCharsets.UTF_8)));
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             LOG.error("Encrypt error: ", ex);
         }
         return result;
@@ -135,8 +130,7 @@ public class PlatformSpecificSecureImpl implements PlatformSpecificSecure {
                 cipher.init(Cipher.DECRYPT_MODE, secretKey);
                 result = new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Decrypt error: ", e);
         }
         return result;

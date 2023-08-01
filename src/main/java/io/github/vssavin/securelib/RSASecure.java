@@ -104,9 +104,9 @@ public class RSASecure implements Secure {
                 decryptedBytes = rsaCipher.doFinal(base64);
             }
 
-            Arrays.fill(base64, (byte)0);
+            Arrays.fill(base64, (byte) 0);
             decrypted = new String(decryptedBytes);
-            Arrays.fill(decryptedBytes, (byte)0);
+            Arrays.fill(decryptedBytes, (byte) 0);
         } catch (InvalidKeySpecException | InvalidKeyException |
                 BadPaddingException | IllegalBlockSizeException e) {
             String errorMessage = "Decryption error!";
@@ -119,7 +119,9 @@ public class RSASecure implements Secure {
 
     @Override
     public String encrypt(String message, String publicKeyString) {
-        if (publicKeyString == null) return message;
+        if (publicKeyString == null) {
+            return message;
+        }
         publicKeyString = normalizeKey(publicKeyString);
 
         Cipher encryptCipher;
@@ -154,9 +156,11 @@ public class RSASecure implements Secure {
             String commentSeparator = "-----";
             key = key.replaceAll(System.lineSeparator(), "");
             String[] strings = key.split(commentSeparator);
-            for(int i = 0; i < strings.length; i++) {
-                if (strings[i].isEmpty()) i++;
-                else {
+            for (int i = 0; i < strings.length; i++) {
+                //TODO: refactor this later, shouldn't use increment inside this loop
+                if (strings[i].isEmpty()) {
+                    i++;
+                } else {
                     key = strings[i];
                     break;
                 }
@@ -203,14 +207,24 @@ public class RSASecure implements Secure {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             SecureParams that = (SecureParams) o;
 
-            if (!address.equals(that.address)) return false;
-            if (!publicKey.equals(that.publicKey)) return false;
-            if (!privateKey.equals(that.privateKey)) return false;
+            if (!address.equals(that.address)) {
+                return false;
+            }
+            if (!publicKey.equals(that.publicKey)) {
+                return false;
+            }
+            if (!privateKey.equals(that.privateKey)) {
+                return false;
+            }
             return expiration.equals(that.expiration);
         }
 

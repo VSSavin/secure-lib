@@ -17,8 +17,7 @@ class LinuxPlatformSecure implements PlatformSecure {
             String line;
             Process process = Runtime.getRuntime()
                     .exec("udevadm info --query=all --name=/dev/sda | grep ID_SERIAL_SHORT");
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()) );
+            BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
             while ((line = in.readLine()) != null) {
                 if (line.toUpperCase().contains("ID_SERIAL_SHORT")) {
                     String[] strings = line.split("=");
@@ -27,8 +26,7 @@ class LinuxPlatformSecure implements PlatformSecure {
                 }
             }
             in.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error while getting WindowsSecurity: ", e);
         }
         return security;

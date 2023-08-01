@@ -19,7 +19,7 @@ class DefaultPlatformSecure implements PlatformSecure {
             String ignoredString = bundle.getString("ignoredInterfaces");
             String[] splitted = ignoredString.split(",");
             if (splitted.length > 0) {
-                for(String str : splitted) {
+                for (String str : splitted) {
                     IGNORED_INTERFACES.add(str.trim());
                 }
             }
@@ -42,12 +42,10 @@ class DefaultPlatformSecure implements PlatformSecure {
                     all.append(str);
                 }
                 key = all.toString().replace("\u0000", "");
-            }
-            else {
+            } else {
                 key = "01234567890";
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             LOG.error("Error while getting HARDWARE ADDRESSES: ", ex);
         }
 
@@ -58,11 +56,13 @@ class DefaultPlatformSecure implements PlatformSecure {
         Enumeration<NetworkInterface> net = NetworkInterface.getNetworkInterfaces();
         Set<String> ids = new TreeSet<>();
 
-        while(net.hasMoreElements()) {
+        while (net.hasMoreElements()) {
             NetworkInterface element = net.nextElement();
             if (!isIgnoredInterface(element.getName())) {
                 String macAddress = getMacAddress(element);
-                if (!macAddress.isEmpty())  ids.add(macAddress);
+                if (!macAddress.isEmpty()) {
+                    ids.add(macAddress);
+                }
             }
         }
 
@@ -82,7 +82,7 @@ class DefaultPlatformSecure implements PlatformSecure {
 
     private boolean isIgnoredInterface(String name) {
         boolean ignored = false;
-        for(String ignoredInterface : IGNORED_INTERFACES) {
+        for (String ignoredInterface : IGNORED_INTERFACES) {
             if (name.contains(ignoredInterface)) {
                 ignored = true;
                 break;

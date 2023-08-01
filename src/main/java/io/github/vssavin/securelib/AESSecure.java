@@ -24,7 +24,7 @@ public class AESSecure implements Secure {
 
     static {
         loadScriptsFromResources();
-        for(String script : getAdditionalScripts()) {
+        for (String script : getAdditionalScripts()) {
             try {
                 engine.eval(script);
             } catch (ScriptException e) {
@@ -138,8 +138,8 @@ public class AESSecure implements Secure {
     private static void loadScriptsFromResources() {
         List<String> scripts = getJavaScriptsListFromResources();
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        for(String script : scripts) {
-            try(InputStream is = classLoader.getResourceAsStream(script);
+        for (String script : scripts) {
+            try (InputStream is = classLoader.getResourceAsStream(script);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
                 engine.eval(reader);
             } catch (IOException | ScriptException | NullPointerException e) {

@@ -23,18 +23,17 @@ class WindowsPlatformSecure implements PlatformSecure {
         String security = DEFAULT_KEY;
         try {
             String line;
-            Process process = Runtime.getRuntime().exec("cmd /c chcp 65001" + " && cmd /c vol "+driveLetter+":");
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()) );
+            Process process = Runtime.getRuntime()
+                    .exec("cmd /c chcp 65001" + " && cmd /c vol " + driveLetter + ":");
+            BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
             while ((line = in.readLine()) != null) {
-                if(line.toLowerCase().contains("serial number")){
+                if (line.toLowerCase().contains("serial number")) {
                     String[] strings = line.split(" ");
-                    security = strings[strings.length-1];
+                    security = strings[strings.length - 1];
                 }
             }
             in.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error while getting WindowsSecurity: ", e);
         }
         return security;
