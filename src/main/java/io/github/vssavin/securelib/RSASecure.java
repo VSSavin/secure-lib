@@ -1,5 +1,6 @@
 package io.github.vssavin.securelib;
 
+import io.github.vssavin.securelib.platformSecure.DecryptionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,6 +8,8 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.security.*;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
@@ -109,9 +112,7 @@ public class RSASecure implements Secure {
             Arrays.fill(decryptedBytes, (byte) 0);
         } catch (InvalidKeySpecException | InvalidKeyException |
                 BadPaddingException | IllegalBlockSizeException e) {
-            String errorMessage = "Decryption error!";
-            LOG.error(errorMessage, e);
-            throw new EncryptionException(errorMessage, e);
+            throw new DecryptionException("Decryption error!", e);
         }
 
         return decrypted;
@@ -138,9 +139,7 @@ public class RSASecure implements Secure {
             Arrays.fill(base64, (byte) 0);
 
         } catch (Exception e) {
-            String errorMessage = "Encryption error!";
-            LOG.error(errorMessage, e);
-            throw new EncryptionException(errorMessage, e);
+            throw new EncryptionException("Encryption error!", e);
         }
 
         return encrypted;
@@ -153,18 +152,10 @@ public class RSASecure implements Secure {
 
     private String normalizeKey(String key) {
         if (key != null) {
-            String commentSeparator = "-----";
-            key = key.replaceAll(System.lineSeparator(), "");
-            String[] strings = key.split(commentSeparator);
-            for (int i = 0; i < strings.length; i++) {
-                //TODO: refactor this later, shouldn't use increment inside this loop
-                if (strings[i].isEmpty()) {
-                    i++;
-                } else {
-                    key = strings[i];
-                    break;
-                }
-            }
+            BufferedReader reader = new BufferedReader(new StringReader(key));
+            key = reader.lines().filter(s ->
+                    !s.trim().toLowerCase().startsWith("--") && !s.trim().toLowerCase().startsWith("comment"))
+                    .collect(Collectors.joining());
         }
 
         return key;
